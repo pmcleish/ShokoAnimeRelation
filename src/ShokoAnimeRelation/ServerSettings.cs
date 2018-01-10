@@ -26,8 +26,6 @@ namespace ShokoAnimeRelation
 
       public static AutoGroupExclude GetAutoGroupSeriesRelationExclusions()
       {
-         AutoGroupExclude exclusions = AutoGroupExclude.None;
-
          var exclusionTokens = AutoGroupSeriesRelationExclusions
             .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim())

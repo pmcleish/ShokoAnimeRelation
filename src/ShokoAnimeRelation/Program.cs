@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Web;
+using MySql.Data.MySqlClient;
 using Shoko.Server.Tasks;
 using static System.Console;
 
@@ -15,13 +16,12 @@ namespace ShokoAnimeRelation
    {
       private const int MaxTitleLength = 80;
       private const int WordWrapLength = 35;
+      private const string ConnectionStringKeyName = "Shoko";
 
       public static void Main(string[] args)
       {
-         using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["Shoko"].ConnectionString))
+         using (IDbConnection con = OpenDatabaseConnection())
          {
-            con.Open();
-
             var relations = GetRelations(con).ToList();
             var knownAnime = GetAnime(con).ToDictionary(a => a.AnimeId);
             var relationsPerAnime = relations.Select(r => new { From = r.AnimeId, To = r.RelatedAnimeId })
@@ -145,6 +145,42 @@ namespace ShokoAnimeRelation
          }
       }
 
+      /// <summary>
+      /// Opens a connection to the configured database.
+      /// </summary>
+      /// <remarks>
+      /// Currently supports MySql and Sql Server (default).
+      /// </remarks>
+      /// <returns>An opened <see cref="IDbConnection"/>.</returns>
+      /// <exception cref="ConfigurationErrorsException">No connectionString with the expected name exists.</exception>
+      private static IDbConnection OpenDatabaseConnection()
+      {
+         ConnectionStringSettings conStrSettings = ConfigurationManager.ConnectionStrings[ConnectionStringKeyName];
+
+         if (conStrSettings == null)
+         {
+            throw new ConfigurationErrorsException("No connectionString named '" + ConnectionStringKeyName + "' found.");
+         }
+
+         string conStr = conStrSettings.ConnectionString;
+         IDbConnection dbCon;
+
+         switch (conStrSettings.ProviderName?.ToLowerInvariant())
+         {
+            case "mysql.data.mysqlclient":
+            case "mysql":
+               dbCon = new MySqlConnection(conStr);
+               break;
+            default:
+               dbCon = new SqlConnection(conStr);
+               break;
+         }
+
+         dbCon.Open();
+
+         return dbCon;
+      }
+
       private static List<HashSet<int>> BuildSubGraphs(ILookup<int, int> relationsPerAnime)
       {
          var subGraphs = new List<HashSet<int>>();
@@ -188,13 +224,13 @@ namespace ShokoAnimeRelation
          return animeIdSet;
       }
 
-      private static IEnumerable<(int AnimeId, int RelatedAnimeId, string RelationType)> GetRelations(SqlConnection con)
+      private static IEnumerable<(int AnimeId, int RelatedAnimeId, string RelationType)> GetRelations(IDbConnection con)
       {
-         using (SqlCommand cmd = con.CreateCommand())
+         using (IDbCommand cmd = con.CreateCommand())
          {
             cmd.CommandText = "SELECT AnimeID, RelatedAnimeID, RelationType FROM AniDB_Anime_Relation";
 
-            using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+            using (IDataReader reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
             {
                while (reader.Read())
                {
@@ -204,13 +240,13 @@ namespace ShokoAnimeRelation
          }
       }
 
-      private static IEnumerable<(int AnimeId, string MainTitle, AnimeType AnimeType, DateTime? AirDate)> GetAnime(SqlConnection con)
+      private static IEnumerable<(int AnimeId, string MainTitle, AnimeType AnimeType, DateTime? AirDate)> GetAnime(IDbConnection con)
       {
-         using (SqlCommand cmd = con.CreateCommand())
+         using (IDbCommand cmd = con.CreateCommand())
          {
             cmd.CommandText = "SELECT AnimeId, MainTitle, AnimeType, AirDate FROM AniDB_Anime";
 
-            using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+            using (IDataReader reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
             {
                while (reader.Read())
                {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
@@ -61,7 +62,7 @@ namespace Shoko.Server.Tasks
       /// <param name="con">The open database connection.</param>
       /// <returns>The created <see cref="AutoAnimeGroupCalculator"/>.</returns>
       /// <exception cref="ArgumentNullException"><paramref name="con"/> is <c>null</c>.</exception>
-        public static AutoAnimeGroupCalculator CreateFromServerSettings(SqlConnection con)
+        public static AutoAnimeGroupCalculator CreateFromServerSettings(IDbConnection con)
         {
             string exclusionsSetting = ServerSettings.AutoGroupSeriesRelationExclusions;
             AutoGroupExclude exclusions = AutoGroupExclude.None;
@@ -109,13 +110,13 @@ namespace Shoko.Server.Tasks
       /// for representing the group.</param>
       /// <returns>The created <see cref="AutoAnimeGroupCalculator"/>.</returns>
       /// <exception cref="ArgumentNullException"><paramref name="con"/> is <c>null</c>.</exception>
-      public static AutoAnimeGroupCalculator Create(SqlConnection con, AutoGroupExclude exclusions = AutoGroupExclude.SameSetting | AutoGroupExclude.Character,
+      public static AutoAnimeGroupCalculator Create(IDbConnection con, AutoGroupExclude exclusions = AutoGroupExclude.SameSetting | AutoGroupExclude.Character,
          AnimeRelationType relationsToFuzzyTitleTest = AnimeRelationType.SecondaryRelations, MainAnimeSelectionStrategy mainAnimeSelectionStrategy = MainAnimeSelectionStrategy.MinAirDate)
       {
          if (con == null)
             throw new ArgumentNullException(nameof(con));
 
-         using (SqlCommand cmd = con.CreateCommand())
+         using (IDbCommand cmd = con.CreateCommand())
          {
             cmd.CommandText = @"
                SELECT  fromAnime.AnimeID AS fromAnimeId
@@ -133,7 +134,7 @@ namespace Shoko.Server.Tasks
                      INNER JOIN AniDB_Anime toAnime
                         ON toAnime.AnimeID = rel.RelatedAnimeID";
 
-            using (SqlDataReader reader = cmd.ExecuteReader())
+            using (IDataReader reader = cmd.ExecuteReader())
             {
                var relationshipMap = ReadAnimeRelations(reader).ToLookup(k => k.FromId);
 
@@ -142,7 +143,7 @@ namespace Shoko.Server.Tasks
             }
          }
 
-         IEnumerable<AnimeRelation> ReadAnimeRelations(SqlDataReader reader)
+         IEnumerable<AnimeRelation> ReadAnimeRelations(IDataReader reader)
          {
             while (reader.Read())
             {
