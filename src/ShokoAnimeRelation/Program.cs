@@ -28,6 +28,7 @@ namespace ShokoAnimeRelation
                .Union(relations.Select(r => new { From = r.RelatedAnimeId, To = r.AnimeId }))
                .ToLookup(r => r.From, r => r.To);
             var animeGroupCalculator = AutoAnimeGroupCalculator.CreateFromServerSettings(con);
+            AutoGroupExclude relExclude = ServerSettings.GetAutoGroupSeriesRelationExclusions();
 
             List<HashSet<int>> subGraphs = BuildSubGraphs(relationsPerAnime);
 
@@ -128,7 +129,16 @@ namespace ShokoAnimeRelation
                Write(edge.RelatedAnimeId);
                Write("\" [label=\"");
                Write(edge.RelationType);
-               WriteLine("\"];");
+               Write("\"");
+
+               // If the relation is meant to be exlcuded when calculating groups, then we'll colour it differently
+               if (Enum.TryParse(edge.RelationType.Replace(" ", string.Empty), true, out AutoGroupExclude relType)
+                  && (relType & relExclude) > 0)
+               {
+                  Write(", color=grey, style=dashed");
+               }
+
+               WriteLine("];");
             }
 
             WriteLine("}");

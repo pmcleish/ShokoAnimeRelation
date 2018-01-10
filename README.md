@@ -12,6 +12,7 @@ Once a DOT file has been created, you can use GraphViz to generate an SVG. For e
 
 The generated graph only contains anime that has one or more relations (and is rather messy).
 The background colours for the nodes should match roughly what AniDB has.
+The grey dashed relation arrows indicate that those relations aren't considered when calculating Anime Groups.
 The red square nodes are anime that have a relation, but have no AniDB_Anime record.
 The double octagon nodes are the series that Shoko would be choosing as the main series of the AnimeGroup.
 Also, each node can be clicked to open it's anidb page in a separate browser tab.
