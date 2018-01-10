@@ -7,8 +7,10 @@ GraphViz can be downloaded from [here](https://graphviz.gitlab.io/_pages/Downloa
 To use, configure SQL Server connection string in the config file, then run the application. The DOT file content will be written
 to standard output. To save to a file, simply redirect standard output to a file (e.g. `ShokoAnimeRelation.exe > relations.dot`)
 
-Once a DOT file has been created, you can use GraphViz to generate an SVG. For example, from a command prompt:
+Once a DOT file has been created, you can use GraphViz to generate an SVG. For example, from a command prompt (Assumes GraphViz is installed to "D:\GraphViz"):
 `D:\GraphViz\bin\sfdp -Tsvg -o relations.svg relations.dot`
+or you can skip the intermediate DOT file and just pipe the result straight through, e.g.
+`ShokoAnimeRelation.exe | D:\GraphViz\bin\sfdp -Tsvg -o relations.svg`
 
 The generated graph only contains anime that has one or more relations (and is rather messy).
 The background colours for the nodes should match roughly what AniDB has.
